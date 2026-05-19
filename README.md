@@ -241,8 +241,8 @@ MIT — free to use, modify, and distribute.
 
 <div align="center">
 
-Built by **[Your Name]** · IIT Guwahati
+Built by **[DEV SHARMA]** · IIT Guwahati
 <br>
-[LinkedIn](https://linkedin.com/in/yourprofile) · [GitHub](https://github.com/YOURUSERNAME)
+[LinkedIn](https://www.linkedin.com/in/dev-sharma-324747383/) · [GitHub](https://github.com/devsharma30)
 
 </div>
