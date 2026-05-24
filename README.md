@@ -7,7 +7,7 @@
 **Describe a task in plain English → AI generates Python code → Safety gate → Executes on your filesystem**
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=flat&logo=openai&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google-Gemini%201.5%20Flash-4285F4?style=flat&logo=google&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat)
 ![Status](https://img.shields.io/badge/Status-Active-22c55e?style=flat)
 ![IIT Guwahati](https://img.shields.io/badge/IIT-Guwahati-003366?style=flat)
@@ -18,7 +18,7 @@
 
 ## 📌 What is this?
 
-**ScriptAssist** is a command-line AI agent that bridges natural language and filesystem automation. You type a task in plain English — the tool uses an LLM to generate a Python script, shows it to you for review, and executes it via subprocess with automatic error recovery.
+**ScriptAssist** is a command-line AI agent that bridges natural language and filesystem automation. You type a task in plain English — the tool uses Google Gemini to generate a Python script, shows it to you for review, and executes it via subprocess with automatic error recovery.
 
 This is a **minimal ReAct-style AI agent** (Reason → Act → Observe) built from scratch — the same architecture powering production tools like Devin and GitHub Copilot's terminal features, implemented with intentional safety constraints for real filesystem operations.
 
@@ -62,7 +62,7 @@ User Input (plain English)
         │
         ▼
 ┌──────────────────┐
-│   llm_caller.py  │  ← Calls OpenAI API with engineered system prompt
+│   llm_caller.py  │  ← Calls Google Gemini API with engineered system prompt
 │   (The Brain)    │    Returns raw Python code string
 └────────┬─────────┘
          │
@@ -74,7 +74,7 @@ User Input (plain English)
          │ approved
          ▼
 ┌──────────────────┐     failure    ┌─────────────────┐
-│   executor.py    │ ─────────────► │  LLM Retry      │
+│   executor.py    │ ─────────────► │  Gemini Retry   │
 │   (subprocess)   │                │  (traceback →   │
 │                  │ ◄───────────── │   fixed script) │
 └────────┬─────────┘   fixed once   └─────────────────┘
@@ -90,7 +90,7 @@ User Input (plain English)
 | File | Responsibility |
 |------|---------------|
 | `main.py` | CLI loop, conversation history, ties everything together |
-| `llm_caller.py` | OpenAI API calls, prompt engineering, code fence stripping |
+| `llm_caller.py` | Google Gemini API calls, prompt engineering, code fence stripping |
 | `executor.py` | `subprocess.run()` execution, temp file management, retry logic |
 | `safety.py` | Dangerous pattern detection, user confirmation gate |
 | `logger.py` | Timestamped session logs via `pathlib` |
@@ -103,8 +103,8 @@ User Input (plain English)
 - **Natural language → executable Python** — no syntax knowledge required from the user
 - **Multi-turn conversation memory** — follow-up tasks work contextually ("now do it for .txt files")
 - **Safety gate before every execution** — dangerous operations (delete, overwrite, network) are flagged and require explicit confirmation
-- **LLM-prompted dry-run mode** — system prompt instructs the model to preview actions before executing them
-- **Automatic single-shot error recovery** — on failure, the full traceback is passed back to the LLM for a one-time fix attempt
+- **Gemini-prompted dry-run mode** — system prompt instructs the model to preview actions before executing them
+- **Automatic single-shot error recovery** — on failure, the full traceback is passed back to Gemini for a one-time fix attempt
 - **Session logging** — every run is saved to `~/.scriptassist_logs/` with timestamp, task, generated script, and output
 - **Conversation trimming** — history is capped to prevent token overuse and context window overflow
 
@@ -131,7 +131,7 @@ Real filesystem operations require careful safety thinking. Every design decisio
 
 ### Prerequisites
 - Python 3.10+
-- An OpenAI API key ([get one here](https://platform.openai.com/api-keys))
+- A free Google Gemini API key ([get one here](https://aistudio.google.com/app/apikey))
 
 ### Installation
 
@@ -151,7 +151,7 @@ pip install -r requirements.txt
 # 4. Set up your API key
 cp .env.example .env
 # Open .env and paste your key:
-# OPENAI_API_KEY=sk-...your key here...
+# GEMINI_API_KEY=AIzaSy...your key here...
 
 # 5. Run
 python main.py
@@ -210,12 +210,12 @@ This project was built to demonstrate the following in depth:
 ```
 scriptassist/
 ├── main.py              # Entry point — CLI loop and orchestration
-├── llm_caller.py        # OpenAI API communication and prompt engineering
+├── llm_caller.py        # Google Gemini API calls and prompt engineering
 ├── executor.py          # subprocess execution, retry logic, temp file management
 ├── safety.py            # Dangerous pattern detection and user confirmation
 ├── logger.py            # Session logging with pathlib
 ├── config.py            # API key loading via python-dotenv
-├── requirements.txt     # openai, python-dotenv
+├── requirements.txt     # google-generativeai, python-dotenv
 ├── .env.example         # Template — copy to .env and add your key
 ├── .gitignore           # Excludes .env, __pycache__, venv
 └── README.md
@@ -228,7 +228,7 @@ scriptassist/
 - **Sandbox mode** — run generated scripts inside a temporary directory copy instead of the real filesystem
 - **Script library** — save and reuse previously generated scripts by task description
 - **Streaming output** — real-time stdout using `subprocess.Popen` instead of `run()`
-- **Local LLM support** — swap OpenAI for Ollama to run fully offline
+- **Local LLM support** — swap Gemini for Ollama to run fully offline
 - **Web interface** — wrap the CLI in a FastAPI + React frontend
 
 ---
