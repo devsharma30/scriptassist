@@ -1,12 +1,15 @@
-import google.generativeai as genai
-# Google's official Gemini library
-from config import GEMINI_API_KEY
+from groq import Groq
+# Groq's official Python library
+from config import GROQ_API_KEY
 
-# genai.configure() sets the API key globally.
-# All subsequent calls use this key automatically.
-genai.configure(api_key=GEMINI_API_KEY)
+# ── Create the Groq client ────────────────────────────────────
+# Groq() creates a client object — same pattern as OpenAI.
+# All API calls go through this client.
+client = Groq(api_key=GROQ_API_KEY)
+
+
 # model that we are using
-MODEL = "gemini-1.5-flash"
+MODEL = "llama-3.3-70b-versatile"
 
 # ── ANSI colors ──
 CYAN = "\033[36m"
@@ -45,7 +48,7 @@ CODE QUALITY RULES:
 
 def generate_script(task: str, conversation_history: list) -> str:
     """
-    Sends the user's task to Gemini and returns a Python script.
+    Sends the user's task to Groq and returns a Python script.
 
     Parameters:
         task (str): Plain-English description
@@ -54,47 +57,33 @@ def generate_script(task: str, conversation_history: list) -> str:
     Returns:
         str: The generated Python script as a plain string
     """
-    print(f"\n{CYAN}⏳  Asking Gemini to generate script...{RESET}")
+    print(f"\n{CYAN}⏳  Asking Groq to generate script...{RESET}")
 
-    # ── Build the full prompt ─────────────────────────────────
-    # We combine the system prompt + conversation history + current task into one single prompt string.
-    # This is how we give Gemini context of previous tasks.
+    # Build the messages list.
+    # system message = instructions for the AI
+    # conversation_history = previous exchanges for context
+    # user message = current task
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        *conversation_history,              # unpack history into list
+        {"role": "user",   "content": task},
+    ]
 
-    history_text = ""
-
-    # if we have previous history then it will run
-    # conversation_history is of [list] data type
-
-    if conversation_history:
-        history_text = "\n\nPREVIOUS CONVERSATION CONTEXT:\n"
-        for msg in conversation_history:
-            role = "User" if msg["role"] == "user" else "Assistant (script)"
-            history_text += f"{role}: {msg['content']}\n\n"
-
-    full_prompt = f"{SYSTEM_PROMPT}{history_text}\n\nCurrent task: {task}"
-
-    # ── The actual Gemini API call ──────────────────
-    # genai.GenerativeModel() creates a model instance.
-    # .generate_content() sends the prompt and returns a response.
-
-    model = genai.GenerativeModel(
-        model_name=MODEL,
-        # configuration for generation which include temperature and max token limit.token limit is set to 1500 which means the response will be capped at 1500 tokens. Temperature is set to 0.2 which means the output will be more deterministic and less random.
-        generation_config={
-            "temperature": 0.2,
-            "max_output_tokens": 1500,
-        }
+    # ── The actual API call ───────────────────────────────────
+    # Groq uses exact same interface as OpenAI.
+    # client.chat.completions.create() sends the request.
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        temperature=0.2,       # low = more deterministic code
+        max_tokens=1500,       # cap response length
     )
 
-    response = model.generate_content(full_prompt)
-
-    # now to Parse the response->
-    # response.text is the generated text string directly.
-    script = response.text.strip()
-
-    # Clean up any markdown code fences the model might add
+    # ── Parse the response ────────────────────────────────────
+    # Same navigation as OpenAI:
+    # response.choices[0].message.content = the generated text
+    script = response.choices[0].message.content.strip()
     script = _strip_code_fences(script)
-
     return script
 
 
@@ -103,7 +92,7 @@ def generate_fix(original_task: str,
                  traceback: str,
                  conversation_history: list) -> str:
     """
-    When a script fails, sends the error back to Gemini
+    When a script fails, sends the error back to Groq
     and asks for a single-shot fix.
 
     Parameters:
@@ -115,11 +104,9 @@ def generate_fix(original_task: str,
     Returns:
         str: A fixed Python script
     """
-    print(f"\n{CYAN}⏳  Asking Gemini to fix the error...{RESET}")
+    print(f"\n{CYAN}⏳  Asking Groq to fix the error...{RESET}")
 
-    fix_prompt = f"""{SYSTEM_PROMPT}
- 
-The following Python script failed to execute.
+    fix_prompt = f"""The following Python script failed to execute.
  
 ORIGINAL TASK:
 {original_task}
@@ -133,24 +120,28 @@ ERROR TRACEBACK:
 Please fix the script. Return ONLY the corrected Python code.
 No explanations, no markdown, just the fixed code."""
 
-    model = genai.GenerativeModel(
-        model_name=MODEL,
-        generation_config={
-            "temperature": 0.1,    # Even lower for fixes
-            "max_output_tokens": 1500,
-        }
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        *conversation_history,
+        {"role": "user", "content": fix_prompt},
+    ]
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        temperature=0.1,       # even lower for fixes — max determinism
+        max_tokens=1500,
     )
 
-    response = model.generate_content(fix_prompt)
-    fixed_script = response.text.strip()
+    fixed_script = response.choices[0].message.content.strip()
     fixed_script = _strip_code_fences(fixed_script)
     return fixed_script
 
 
 def _strip_code_fences(text: str) -> str:
     """
-    Removes markdown code fences from Gemini output.
-    Gemini sometimes wraps code in ```python ... ``` even
+    Removes markdown code fences from Groq output.
+    Groq sometimes wraps code in ```python ... ``` even
     when instructed not to. This cleans that up.
     """
     if text.startswith("```"):

@@ -7,7 +7,7 @@
 **Describe a task in plain English → AI generates Python code → Safety gate → Executes on your filesystem**
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
-![Gemini](https://img.shields.io/badge/Google-Gemini%201.5%20Flash-4285F4?style=flat&logo=google&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-F55036?style=flat&logo=groq&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat)
 ![Status](https://img.shields.io/badge/Status-Active-22c55e?style=flat)
 ![IIT Guwahati](https://img.shields.io/badge/IIT-Guwahati-003366?style=flat)
@@ -18,7 +18,7 @@
 
 ## 📌 What is this?
 
-**ScriptAssist** is a command-line AI agent that bridges natural language and filesystem automation. You type a task in plain English — the tool uses Google Gemini to generate a Python script, shows it to you for review, and executes it via subprocess with automatic error recovery.
+**ScriptAssist** is a command-line AI agent that bridges natural language and filesystem automation. You type a task in plain English — the tool uses Groq's Llama 3.3 70B to generate a Python script, shows it to you for review, and executes it via subprocess with automatic error recovery.
 
 This is a **minimal ReAct-style AI agent** (Reason → Act → Observe) built from scratch — the same architecture powering production tools like Devin and GitHub Copilot's terminal features, implemented with intentional safety constraints for real filesystem operations.
 
@@ -62,7 +62,7 @@ User Input (plain English)
         │
         ▼
 ┌──────────────────┐
-│   llm_caller.py  │  ← Calls Google Gemini API with engineered system prompt
+│   llm_caller.py  │  ← Calls Groq API (Llama 3.3 70B) with engineered system prompt
 │   (The Brain)    │    Returns raw Python code string
 └────────┬─────────┘
          │
@@ -74,7 +74,7 @@ User Input (plain English)
          │ approved
          ▼
 ┌──────────────────┐     failure    ┌─────────────────┐
-│   executor.py    │ ─────────────► │  Gemini Retry   │
+│   executor.py    │ ─────────────► │  Groq Retry     │
 │   (subprocess)   │                │  (traceback →   │
 │                  │ ◄───────────── │   fixed script) │
 └────────┬─────────┘   fixed once   └─────────────────┘
@@ -90,7 +90,7 @@ User Input (plain English)
 | File | Responsibility |
 |------|---------------|
 | `main.py` | CLI loop, conversation history, ties everything together |
-| `llm_caller.py` | Google Gemini API calls, prompt engineering, code fence stripping |
+| `llm_caller.py` | Groq API calls, prompt engineering, code fence stripping |
 | `executor.py` | `subprocess.run()` execution, temp file management, retry logic |
 | `safety.py` | Dangerous pattern detection, user confirmation gate |
 | `logger.py` | Timestamped session logs via `pathlib` |
@@ -103,8 +103,8 @@ User Input (plain English)
 - **Natural language → executable Python** — no syntax knowledge required from the user
 - **Multi-turn conversation memory** — follow-up tasks work contextually ("now do it for .txt files")
 - **Safety gate before every execution** — dangerous operations (delete, overwrite, network) are flagged and require explicit confirmation
-- **Gemini-prompted dry-run mode** — system prompt instructs the model to preview actions before executing them
-- **Automatic single-shot error recovery** — on failure, the full traceback is passed back to Gemini for a one-time fix attempt
+- **LLM-prompted dry-run mode** — system prompt instructs the model to preview actions before executing them
+- **Automatic single-shot error recovery** — on failure, the full traceback is passed back to Groq for a one-time fix attempt
 - **Session logging** — every run is saved to `~/.scriptassist_logs/` with timestamp, task, generated script, and output
 - **Conversation trimming** — history is capped to prevent token overuse and context window overflow
 
@@ -131,13 +131,13 @@ Real filesystem operations require careful safety thinking. Every design decisio
 
 ### Prerequisites
 - Python 3.10+
-- A free Google Gemini API key ([get one here](https://aistudio.google.com/app/apikey))
+- A free Groq API key ([get one here](https://console.groq.com))
 
 ### Installation
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOURUSERNAME/scriptassist.git
+git clone https://github.com/devsharma30/scriptassist.git
 cd scriptassist
 
 # 2. Create a virtual environment (recommended)
@@ -151,7 +151,7 @@ pip install -r requirements.txt
 # 4. Set up your API key
 cp .env.example .env
 # Open .env and paste your key:
-# GEMINI_API_KEY=AIzaSy...your key here...
+# GROQ_API_KEY=gsk_...your key here...
 
 # 5. Run
 python main.py
@@ -181,8 +181,6 @@ python main.py
 
 ## 🧠 Technical Concepts Demonstrated
 
-This project was built to demonstrate the following in depth:
-
 **AI / LLM Engineering**
 - Prompt engineering for code generation safety (output format constraints, dry-run instruction, error handling requirements)
 - Multi-turn conversation context management with token budgeting
@@ -210,12 +208,12 @@ This project was built to demonstrate the following in depth:
 ```
 scriptassist/
 ├── main.py              # Entry point — CLI loop and orchestration
-├── llm_caller.py        # Google Gemini API calls and prompt engineering
+├── llm_caller.py        # Groq API calls and prompt engineering
 ├── executor.py          # subprocess execution, retry logic, temp file management
 ├── safety.py            # Dangerous pattern detection and user confirmation
 ├── logger.py            # Session logging with pathlib
 ├── config.py            # API key loading via python-dotenv
-├── requirements.txt     # google-generativeai, python-dotenv
+├── requirements.txt     # groq, python-dotenv
 ├── .env.example         # Template — copy to .env and add your key
 ├── .gitignore           # Excludes .env, __pycache__, venv
 └── README.md
@@ -228,7 +226,7 @@ scriptassist/
 - **Sandbox mode** — run generated scripts inside a temporary directory copy instead of the real filesystem
 - **Script library** — save and reuse previously generated scripts by task description
 - **Streaming output** — real-time stdout using `subprocess.Popen` instead of `run()`
-- **Local LLM support** — swap Gemini for Ollama to run fully offline
+- **Local LLM support** — swap Groq for Ollama to run fully offline
 - **Web interface** — wrap the CLI in a FastAPI + React frontend
 
 ---
@@ -241,7 +239,7 @@ MIT — free to use, modify, and distribute.
 
 <div align="center">
 
-Built by **[DEV SHARMA]** · IIT Guwahati
+Built by **DEV SHARMA** · IIT Guwahati
 <br>
 [LinkedIn](https://www.linkedin.com/in/dev-sharma-324747383/) · [GitHub](https://github.com/devsharma30)
 

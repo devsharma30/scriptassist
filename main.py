@@ -10,14 +10,14 @@
 
 
 # ARCHITECTURE OVERVIEW:
-#   main.py → calls → llm_caller.py (generate script)
+#   main.py → calls → llmcaller.py (generate script)
 #          → calls → safety.py     (show code, ask permission)
 #          → calls → executor.py   (run script, retry on failure)
 #          → calls → logger.py     (save log)
 
 import sys   # sys.exit() to quit cleanly
 
-from llm_caller import generate_script
+from llmcaller import generate_script
 from safety import ask_user_permission
 from executor import run_with_retry
 from logger import log_run, get_recent_logs
