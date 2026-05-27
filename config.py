@@ -8,14 +8,14 @@ load_dotenv()
 # loads every KEY=VALUE line into environment variables.
 # Think of environment variables as a dictionary your OS keeps.
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # error if key is not found so it not become confusing
 
-if not GEMINI_API_KEY:
-    print("\n❌  ERROR: GEMINI_API_KEY not found.")
+if not GROQ_API_KEY:
+    print("\n❌  ERROR: GROQ_API_KEY not found.")
     print("    Steps to fix:")
     print("    1. Copy .env.example  →  .env")
-    print("    2. Open .env and paste your key from https://aistudio.google.com/app/apikey")
+    print("    2. Open .env and paste your key from https://console.groq.com")
     print("    3. Run the program again.\n")
     raise SystemExit(1)
